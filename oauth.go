@@ -535,6 +535,11 @@ func (c *Consumer) makeAccessTokenRequestWithParams(params map[string]string, se
 type RoundTripper struct {
 	consumer *Consumer
 	token    *AccessToken
+	next http.RoundTripper
+}
+
+func (rt *RoundTripper) SetNext(next http.RoundTripper) {
+	rt.next = next
 }
 
 func (c *Consumer) MakeRoundTripper(token *AccessToken) (*RoundTripper, error) {
@@ -937,6 +942,10 @@ func (rt *RoundTripper) RoundTrip(userRequest *http.Request) (*http.Response, er
 
 	if rt.consumer.debug {
 		fmt.Printf("Request: %v\n", serverRequest)
+	}
+
+	if rt.next != nil {
+		return rt.next.RoundTrip(serverRequest)
 	}
 
 	resp, err := rt.consumer.HttpClient.Do(serverRequest)
